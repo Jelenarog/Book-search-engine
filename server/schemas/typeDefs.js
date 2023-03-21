@@ -6,10 +6,10 @@ const typeDefs = gql`
     username: String
     email: String
     bookCount: Int
-    savedBooks: [Book]
+    savedBooks: [bookSchema]
   }
 
-  type Book {
+  type bookSchema {
     _id: ID
     authors: String
     description: String
@@ -18,9 +18,21 @@ const typeDefs = gql`
     link: String
   }
 
+  type Auth {
+    token: ID!
+    user: User
+  }
+
 
   type Query {
     me: [User]
+  }
+    # Define which mutations the client is allowed to make
+    type Mutation {
+    addUser(username: String!, email: String!, password: String!): Auth
+    login(email: String!, password: String!): Auth
+    # saveBook()
+    # removeBook(id: ID!, title: String!): User 
   }
 `;
 

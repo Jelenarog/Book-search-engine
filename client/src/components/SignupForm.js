@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-
-import { createUser } from '../utils/API';
+// Import the `useMutation()` hook from Apollo Client
+import { useMutation } from '@apollo/client';
+// Import the GraphQL mutation
+import { ADD_USER } from '../utils/mutations';
+import { GET_ME } from '../utils/queries';
+// import { createUser } from '../utils/API';
 import Auth from '../utils/auth';
 
 const SignupForm = () => {
@@ -12,9 +16,40 @@ const SignupForm = () => {
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setUserFormData({ ...userFormData, [name]: value });
+    // Invoke `useMutation()` hook to return a Promise-based function and data about the ADD_USER mutation
+    const [addUser, { error }] = useMutation(ADD_USER,{  
+      // The update method allows us to access and update the local cache
+      update(cache, { data: { addUser } }) {
+        try {
+          // First we retrieve existing user data that is stored in the cache under the `GET_ME` query
+          // Could potentially not exist yet, so wrap in a try/catch
+          const { user } = cache.readQuery({ query: GET_ME });
+  
+          // Then we update the cache by combining existing user data with the newly created data returned from the mutation
+          cache.writeQuery({
+            query: GET_ME,
+            // If we want new data to show up before or after existing data, adjust the order of this array
+            data: { user: [...user, addUser] },
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    }
+
+      );
+
+  const handleInputChange = async (event) => {
+    event.preventDefault();
+    try {
+      // Execute mutation and pass in defined parameter data as variables
+      const { data } = await addUser({
+        variables: {...userFormData},
+      });
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleFormSubmit = async (event) => {
